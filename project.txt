@@ -371,11 +371,11 @@ Document Processing Errors:
 Handles corrupted or unsupported files gracefully
 Provides details about processing failures
 Maintains system stability during errors
+
 8. Future Enhancements
 Potential improvements for future versions:
 
 Advanced Theme Analysis:
-
 Multi-level theme hierarchies
 Visualization of theme relationships
 Sentiment analysis of themes

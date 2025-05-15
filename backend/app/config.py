@@ -9,7 +9,6 @@ SESSION_SECRET = os.environ.get("SESSION_SECRET", "default-secret-key-for-develo
 
 # API Keys
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
 # File storage paths
 UPLOAD_FOLDER = os.path.join(os.getcwd(), "backend/data/uploads")

@@ -63,4 +63,4 @@ def delete_file(file_path: str) -> bool:
         return False
     except Exception as e:
         logger.error(f"Failed to delete file {file_path}: {str(e)}")
-        return False
+        return False 
