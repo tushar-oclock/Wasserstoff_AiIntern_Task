@@ -1,0 +1,148 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="row">
+    <!-- Document Upload Section -->
+    <div class="col-md-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-upload me-2"></i>Upload Documents
+                </h5>
+                <span class="badge bg-info">PDF, Images, Text files</span>
+            </div>
+            <div class="card-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <input class="form-control" type="file" id="documentFiles" name="files[]" multiple accept=".pdf,.png,.jpg,.jpeg,.txt,.md,.tiff,.bmp,.gif">
+                            <button class="btn btn-primary" type="submit" id="uploadBtn">
+                                <i class="fas fa-cloud-upload-alt me-1"></i> Upload
+                            </button>
+                        </div>
+                        <div class="form-text">Upload multiple documents (PDF, images, or text files). OCR will be applied to scanned images.</div>
+                    </div>
+                </form>
+                <div id="uploadProgress" class="progress d-none">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+                <div id="uploadStatus" class="mt-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Management Section -->
+    <div class="col-md-5 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-folder-open me-2"></i>Document Library
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <span id="documentCount" class="badge bg-secondary">0 documents</span>
+                    <div>
+                        <button id="selectAllBtn" class="btn btn-sm btn-outline-secondary">Select All</button>
+                        <button id="clearSelectionBtn" class="btn btn-sm btn-outline-secondary">Clear</button>
+                    </div>
+                </div>
+                <div class="document-list" id="documentList">
+                    <div class="text-center py-5 text-muted">
+                        <i class="fas fa-file-upload fa-3x mb-3"></i>
+                        <p>Upload documents to get started</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Query Section -->
+    <div class="col-md-7 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-search me-2"></i>Research Query
+                </h5>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <div class="mb-3 flex-grow-1">
+                    <textarea class="form-control" id="queryInput" rows="3" placeholder="Enter your research question here..."></textarea>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-primary" id="submitQueryBtn">
+                        <i class="fas fa-paper-plane me-1"></i> Submit Query
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Response Section (Initially Hidden) -->
+    <div class="col-12 mb-4 d-none" id="responseSection">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-network me-2"></i>Theme Analysis
+                </h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-info" id="toggleViewBtn">
+                        <i class="fas fa-table me-1"></i> Toggle View
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" id="exportBtn">
+                        <i class="fas fa-download me-1"></i> Export
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="loadingResults" class="text-center py-5 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Analyzing documents and identifying themes...</p>
+                </div>
+                
+                <!-- Themes Visualization -->
+                <div id="themesVisualization" class="mb-4">
+                    <h6 class="fw-bold mb-3">Identified Themes</h6>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div id="themesContainer"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <canvas id="themeChart" width="100%" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Synthesized Response -->
+                <div id="synthesizedResponse" class="mb-4">
+                    <h6 class="fw-bold mb-2">Synthesized Answer</h6>
+                    <div class="p-3 border rounded bg-dark">
+                        <div id="synthesizedResponseContent"></div>
+                    </div>
+                </div>
+                
+                <!-- Document Responses Table -->
+                <div id="documentResponses">
+                    <h6 class="fw-bold mb-2">Individual Document Responses</h6>
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="responsesTable">
+                            <thead>
+                                <tr>
+                                    <th>Document</th>
+                                    <th>Response</th>
+                                    <th>Citations</th>
+                                </tr>
+                            </thead>
+                            <tbody id="responsesTableBody">
+                                <!-- Document responses will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

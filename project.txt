@@ -1,0 +1,393 @@
+Document Research & Theme Identification System: Technical Report
+1. System Architecture Overview
+The Document Research & Theme Identification System is a comprehensive solution for analyzing, searching, and extracting themes from multiple documents. This report provides a detailed explanation of how the system works, its code structure, and the implementation details.
+
+2. File Structure
+├── backend/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── __init__.py
+│   │   │   └── routes.py         # API endpoints
+│   │   ├── core/
+│   │   │   ├── __init__.py
+│   │   │   └── file_utils.py     # File handling utilities
+│   │   ├── models/
+│   │   │   ├── __init__.py
+│   │   │   └── document.py       # Data models for documents
+│   │   ├── services/
+│   │   │   ├── __init__.py
+│   │   │   ├── document_processor.py  # Document text extraction
+│   │   │   ├── llm_service.py         # LLM interface for analysis
+│   │   │   ├── ocr_service.py         # OCR for image processing
+│   │   │   ├── theme_identifier.py    # Theme detection across docs
+│   │   │   └── vector_store.py        # ChromaDB vector database
+│   │   ├── __init__.py
+│   │   ├── config.py             # Application configuration
+│   │   └── main.py               # Main Flask application
+│   ├── data/
+│   │   ├── chroma_db/            # Vector database storage
+│   │   ├── processed/            # Processed document storage
+│   │   └── uploads/              # Uploaded document storage
+│   ├── Dockerfile                # Container configuration
+│   ├── main.py                   # Entry point
+│   └── requirements.txt          # Python dependencies
+├── static/
+│   ├── css/                      # Stylesheets
+│   └── js/
+│       └── main.js               # Frontend JavaScript
+├── templates/
+│   ├── index.html                # Main application template
+│   └── layout.html               # Base layout template
+├── .env                          # Environment variables
+├── .gitignore                    # Git ignore rules
+├── main.py                       # Root entry point
+└── README.md                     # Project documentation
+3. Core Components & Workflow
+3.1 Document Processing Pipeline
+The system processes documents through the following sequential steps:
+
+Document Upload
+
+Files are uploaded through the web interface
+backend/app/api/routes.py handles the upload request
+Files are stored in the uploads directory with unique IDs
+Text Extraction
+
+document_processor.py analyzes the file type and extracts text:
+PDFs: Uses PyMuPDF to extract text pages
+Images: Uses OCR technology to convert images to text
+Text files: Directly reads the content
+Vector Storage
+
+vector_store.py manages the ChromaDB integration
+Document text is split into chunks for better semantic search
+Each chunk is embedded and stored with metadata
+Document metadata is maintained for retrieval
+3.2 Query & Analysis Process
+When a user submits a query, the following processes occur:
+
+Query Validation & Preprocessing
+
+The query route in backend/app/main.py validates the input
+The system checks for API connectivity via test_groq_connection()
+Document Retrieval
+
+If specific documents are selected, only those are analyzed
+Otherwise, all documents in the database are used
+Document Response Generation
+
+llm_service.py sends each document with the query to the Groq API
+LLM processes the document and generates a response with citations
+Response includes direct quotes from relevant sections
+Theme Identification
+
+theme_identifier.py analyzes all document responses
+Identifies common themes across documents
+Assigns supporting documents to each theme
+Response Synthesis
+
+The system synthesizes a comprehensive response using the themes
+Creates a cohesive answer that addresses the original query
+Includes citations to specific documents
+3.3 Error Handling & Graceful Degradation
+The system incorporates robust error handling:
+
+API Connection Testing
+
+Before processing, tests Groq API connectivity
+Reports detailed error messages for authentication issues
+Token Limit Management
+
+Document content is truncated to prevent exceeding token limits
+Large documents are chunked appropriately (10,000 character limit)
+Fallback Responses
+
+In case of connection errors, provides document previews
+Creates fallback themes when theme identification fails
+Ensures users always get a response, even with API issues
+4. Technology Stack Details
+4.1 Backend Technologies
+Flask Framework
+
+Lightweight web server handling HTTP requests
+Blueprint architecture for API routes
+Error handling middlewares
+ChromaDB Vector Database
+
+Storage for document embeddings
+Semantic search capabilities
+Document metadata management
+Groq API Integration
+
+LLM service for document analysis
+Theme identification across documents
+Response synthesis and document querying
+Document Processing Libraries
+
+PyMuPDF: Extracts text from PDF documents
+Pillow: Image processing for OCR
+Tesseract OCR integration (fallback)
+4.2 Frontend Components
+Bootstrap UI Framework
+
+Responsive design for both desktop and mobile
+Document upload interface
+Query submission and results display
+JavaScript Functionality
+
+Document selection interface
+Theme visualization
+Response formatting and display
+Citation highlighting
+5. Implementation Details
+5.1 Document Processing
+The document processor handles different file types:
+
+def process_document(file_path, doc_id, original_filename, processed_folder):
+    """Process an uploaded document to extract text content."""
+    file_extension = get_file_extension(original_filename).lower()
+    
+    if file_extension in ['pdf']:
+        # Extract text from PDF
+        full_text, page_texts, page_count = process_pdf(file_path)
+    elif file_extension in ['png', 'jpg', 'jpeg', 'bmp', 'tiff', 'gif']:
+        # Process image with OCR
+        full_text, page_count = process_image(file_path)
+    elif file_extension in ['txt', 'md', 'csv']:
+        # Process text file
+        with open(file_path, 'r', encoding='utf-8') as f:
+            full_text = f.read()
+        page_count = 1
+    else:
+        raise ValueError(f"Unsupported file type: {file_extension}")
+    
+    # Create document details
+    doc_details = {
+        'id': doc_id,
+        'filename': original_filename,
+        'text': full_text,
+        'page_count': page_count,
+        'metadata': {
+            'source': original_filename,
+            'date_added': datetime.now().isoformat()
+        }
+    }
+    
+    # Save processed document
+    processed_file_path = os.path.join(processed_folder, f"{doc_id}_processed.json")
+    with open(processed_file_path, 'w', encoding='utf-8') as f:
+        json.dump(doc_details, f, ensure_ascii=False, indent=2)
+    
+    return doc_details
+5.2 Vector Store Operations
+The vector store manages document storage and retrieval:
+
+def add_document(doc_details: Dict[str, Any]) -> bool:
+    """Add a document to the vector store."""
+    try:
+        # Split document into chunks for better search
+        doc_id = doc_details['id']
+        doc_text = doc_details['text']
+        doc_chunks = _split_text(doc_text)
+        
+        # Document metadata
+        metadata = {
+            'id': doc_id,
+            'filename': doc_details.get('filename', 'Unknown'),
+            'page_count': doc_details.get('page_count', 1)
+        }
+        
+        # Prepare chunk data for vector store
+        chunk_ids = []
+        chunk_metadatas = []
+        
+        for i, chunk in enumerate(doc_chunks):
+            chunk_id = f"{doc_id}_chunk_{i}"
+            chunk_ids.append(chunk_id)
+            
+            # Add chunk-specific metadata
+            chunk_metadata = metadata.copy()
+            chunk_metadata['chunk_index'] = i
+            chunk_metadata['chunk_count'] = len(doc_chunks)
+            chunk_metadatas.append(chunk_metadata)
+        
+        # Add to ChromaDB collection
+        collection.add(
+            ids=chunk_ids,
+            documents=doc_chunks,
+            metadatas=chunk_metadatas
+        )
+        
+        # Add document metadata to global metadata
+        all_metadata[doc_id] = {
+            'id': doc_id,
+            'filename': doc_details.get('filename', 'Unknown'),
+            'page_count': doc_details.get('page_count', 1),
+            'text_path': doc_details.get('text_path', ''),
+            'chunk_count': len(doc_chunks)
+        }
+        
+        # Save updated metadata
+        _save_metadata()
+        
+        return True
+    
+    except Exception as e:
+        logger.error(f"Error adding document to vector store: {str(e)}")
+        return False
+5.3 LLM Integration for Document Analysis
+The LLM service handles document querying and theme identification:
+
+def query_document_with_llm(query: str, doc_text: str, doc_metadata: Dict[str, Any]) -> Dict[str, Any]:
+    """Query a document using LLM and generate a response with citations."""
+    try:
+        # Further limit text to avoid token limit errors
+        max_chars = 10000  # About 2500 tokens, leaving room for the rest
+        
+        # Prepare user prompt with document info and query
+        user_prompt = f"""
+        DOCUMENT INFORMATION:
+        Title: {doc_metadata.get('filename', 'Unnamed Document')}
+        ID: {doc_metadata.get('id', 'Unknown')}
+        Pages: {doc_metadata.get('page_count', 'Unknown')}
+        
+        DOCUMENT CONTENT:
+        {doc_text[:max_chars]}
+        [Note: Document content truncated to fit token limits]
+        
+        USER QUERY:
+        {query}
+        
+        Please analyze this document excerpt and provide a concise response.
+        """
+        
+        # Call LLM with the prompt
+        response = groq_client.chat.completions.create(
+            model=MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.1,
+            response_format={"type": "json_object"}
+        )
+        
+        # Process response and return formatted result
+        response_text = response.choices[0].message.content
+        response_data = json.loads(response_text)
+        
+        return {
+            'id': doc_metadata.get('id'),
+            'filename': doc_metadata.get('filename', 'Unknown'),
+            'response': response_data.get('response', ''),
+            'citations': response_data.get('citations', [])
+        }
+    
+    except Exception as e:
+        # Comprehensive error handling for various failure types
+        # ...error handling code here...
+5.4 Theme Identification Process
+The theme identifier analyzes document responses to find common themes:
+
+def identify_themes(document_responses: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Identify common themes across document responses."""
+    try:
+        # Limit response size to avoid token limit issues
+        max_response_chars = 500
+        docs_summary = ""
+        
+        for idx, resp in enumerate(document_responses):
+            # Format document information for the LLM
+            response_text = resp.get('response', '')
+            if len(response_text) > max_response_chars:
+                response_text = response_text[:max_response_chars] + "... [truncated]"
+            docs_summary += f"Response: {response_text}\n"
+            docs_summary += f"Document ID: {resp.get('id', 'Unknown')}\n"
+        
+        # Call LLM to identify themes
+        response = groq_client.chat.completions.create(
+            model=MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.3,
+            response_format={"type": "json_object"}
+        )
+        
+        # Process identified themes
+        response_text = response.choices[0].message.content
+        themes_data = json.loads(response_text)
+        
+        if "themes" in themes_data and themes_data["themes"]:
+            return themes_data["themes"]
+        else:
+            # Create fallback theme when none identified
+            return [{
+                "id": str(uuid.uuid4()),
+                "name": "Document Analysis",
+                "description": "Analysis based on document content.",
+                "supporting_docs": [resp.get('id') for resp in document_responses]
+            }]
+            
+    except Exception as e:
+        # Error handling code
+        # ...
+6. Running the Application Locally
+To run the application locally:
+
+Environment Setup:
+
+# Create a .env file in the root directory
+GROQ_API_KEY=your_groq_api_key_here
+Folder Creation:
+
+# Create necessary directories
+mkdir -p backend/data/uploads backend/data/processed backend/data/chroma_db
+Starting the Application:
+
+# Run from the project root
+python main.py
+Accessing the Interface:
+
+Open a browser and navigate to http://localhost:5000
+Upload documents through the interface
+Enter queries and view results
+7. Error Handling and Troubleshooting
+The application includes comprehensive error handling:
+
+API Connection Issues:
+
+The system tests API connectivity before each query
+Produces user-friendly error messages
+Falls back to document previews when connections fail
+Token Limit Management:
+
+Prevents rate limit errors by limiting document size
+Truncates content appropriately
+Provides clear feedback on rate limit issues
+Document Processing Errors:
+
+Handles corrupted or unsupported files gracefully
+Provides details about processing failures
+Maintains system stability during errors
+8. Future Enhancements
+Potential improvements for future versions:
+
+Advanced Theme Analysis:
+
+Multi-level theme hierarchies
+Visualization of theme relationships
+Sentiment analysis of themes
+Enhanced Document Processing:
+
+Support for more file formats
+Image content analysis
+Table and chart extraction
+User Management:
+
+User accounts and authentication
+Collaboration features
+Project management
+9. Conclusion
+The Document Research & Theme Identification System provides a robust solution for analyzing and extracting insights from multiple documents. Its modular architecture enables easy maintenance and future enhancements, while the error handling ensures reliability even in challenging connectivity situations.

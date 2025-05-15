@@ -1,0 +1,101 @@
+/* Theme Modifications */
+:root {
+    --theme-highlight: rgba(13, 110, 253, 0.1);
+    --theme-border: rgba(255, 255, 255, 0.1);
+}
+
+/* Document List */
+.document-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 0.25rem;
+}
+
+.document-item {
+    border: 1px solid var(--theme-border);
+    transition: all 0.2s ease;
+}
+
+.document-item:hover {
+    background-color: var(--theme-highlight);
+}
+
+.document-item.selected {
+    background-color: var(--theme-highlight);
+    border-color: var(--bs-primary);
+}
+
+/* Theme Items */
+.theme-item {
+    border-left: 4px solid var(--bs-primary);
+    transition: transform 0.2s ease;
+}
+
+.theme-item:hover {
+    transform: translateX(5px);
+}
+
+/* Citation Styles */
+.citation-item {
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    border-left: 3px solid var(--bs-info);
+    background-color: rgba(13, 202, 240, 0.05);
+}
+
+.citation-item .location {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.citation-item .text {
+    font-style: italic;
+    opacity: 0.8;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .document-list {
+        max-height: 300px;
+    }
+}
+
+/* Card View for Responses */
+#responsesCardView .card {
+    transition: transform 0.2s ease;
+}
+
+#responsesCardView .card:hover {
+    transform: translateY(-5px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Loading Animation */
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+#loadingResults .spinner-border {
+    animation: spinner-border 1.5s linear infinite, pulse 2s infinite;
+}
