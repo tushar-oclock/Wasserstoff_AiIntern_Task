@@ -58,7 +58,7 @@ chatbot_theme_identifier/
 
 4. Run the application:
    ```
-   python main.py
+   python app.py
    ```
 
 ## Usage
