@@ -82,3 +82,9 @@ chatbot_theme_identifier/
 ## Acknowledgements
 
 - This project was developed as part of the Wasserstoff Gen-AI Internship Task.
+
+![Project Screenshot](1.jpg)
+
+![Project Screenshot](2.jpg)
+
+![Project Screenshot](3.jpg)
