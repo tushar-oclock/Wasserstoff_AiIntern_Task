@@ -13,7 +13,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
+# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -25,11 +25,9 @@ RUN mkdir -p data/uploads data/processed data/chroma_db
 
 # Set environment variables
 ENV PYTHONPATH=/app
-ENV FLASK_APP=backend/app/main.py
 ENV FLASK_ENV=production
 
-# Use port 7860 for Hugging Face
 EXPOSE 7860
 
-# Start the Flask app using Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:7860", "--workers", "3", "backend.app.main:app"]
+# Start the app
+CMD ["python", "app.py"]
